@@ -25,6 +25,12 @@ export class PetStats {
   @Column({ type: 'int', default: 80 })
   cleanliness: number;
 
+  @Column({ type: 'int', default: 100, name: 'health' })
+  health: number;
+
+  @Column({ type: 'int', default: 0, name: 'total_activities' })
+  totalActivities: number;
+
   @UpdateDateColumn({ name: 'last_updated' })
   lastUpdated: Date;
 

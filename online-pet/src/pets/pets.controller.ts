@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   Headers,
+  BadRequestException,
 } from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
@@ -17,12 +18,23 @@ export class PetsController {
 
   @Post()
   create(@Body() dto: CreatePetDto, @Headers('x-owner-id') ownerId: string) {
+    if (!ownerId) {
+      throw new BadRequestException('Missing X-Owner-ID header');
+    }
     return this.petsService.create({ ...dto, ownerId });
   }
 
   @Get()
   findAll(@Headers('x-owner-id') ownerId: string) {
+    if (!ownerId) {
+      throw new BadRequestException('Missing X-Owner-ID header');
+    }
     return this.petsService.findAll(ownerId);
+  }
+
+  @Get('leaderboard/all')
+  getLeaderboard() {
+    return this.petsService.getLeaderboard();
   }
 
   @Get(':id')

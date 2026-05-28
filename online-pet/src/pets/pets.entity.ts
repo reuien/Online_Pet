@@ -25,6 +25,15 @@ export class Pet {
   @Column({ type: 'int', default: 1 })
   level: number;
 
+  @Column({ type: 'int', default: 0, name: 'experience' })
+  experience: number;
+
+  @Column({ type: 'int', default: 100, name: 'coins' })
+  coins: number;
+
+  @Column({ type: 'varchar', length: 50, default: 'normal', name: 'status' })
+  status: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

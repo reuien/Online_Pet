@@ -24,8 +24,20 @@ export class Activity {
   @Column({ type: 'int', name: 'cleanliness_change', default: 0 })
   cleanlinessChange: number;
 
+  @Column({ type: 'int', name: 'health_change', default: 0 })
+  healthChange: number;
+
+  @Column({ type: 'int', name: 'exp_reward', default: 10 })
+  expReward: number;
+
+  @Column({ type: 'int', name: 'coin_reward', default: 0 })
+  coinReward: number;
+
   @Column({ type: 'int', name: 'location_id', nullable: true })
   locationId: number;
+
+  @Column({ type: 'varchar', length: 50, nullable: true, name: 'icon' })
+  icon: string;
 
   @ManyToOne(() => Location, { nullable: true })
   @JoinColumn({ name: 'location_id' })
