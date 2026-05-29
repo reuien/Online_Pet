@@ -12,12 +12,27 @@
       </router-link>
       <h1 class="text-xl font-bold text-white truncate">{{ pet?.name || '宠物详情' }}</h1>
       <div class="ml-auto">
-        <PxButton type="danger" size="sm" @click="handleDelete">
-          <template #icon>
-            <PxIcon icon="trash" size="sm" />
+        <PxPopconfirm
+          title="确定要删除这只宠物吗？"
+          confirm-button-text="删除"
+          cancel-button-text="取消"
+          confirm-button-type="danger"
+          cancel-button-type="default"
+          icon="warning"
+          icon-color="#e74c3c"
+          placement="bottom-end"
+          trigger="click"
+          @confirm="handleDelete"
+        >
+          <template #reference>
+            <PxButton type="danger" size="sm">
+              <template #icon>
+                <PxIcon icon="trash" size="sm" />
+              </template>
+              删除
+            </PxButton>
           </template>
-          删除
-        </PxButton>
+        </PxPopconfirm>
       </div>
     </div>
 
@@ -167,7 +182,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PxCard, PxButton, PxBadge, PxProgress, PxTooltip, PxIcon } from 'sakana-element'
+import { PxCard, PxButton, PxBadge, PxProgress, PxTooltip, PxIcon, PxPopconfirm } from 'sakana-element'
 import PetAvatar from '../components/PetAvatar.vue'
 import { api, type Pet, type PetLog, type Activity } from '../api/client'
 
@@ -262,7 +277,6 @@ async function handleActivity(activityId: number, activityName: string) {
 
 async function handleDelete() {
   if (!id.value || !pet.value) return
-  if (!window.confirm(`确定要删除 ${pet.value.name} 吗？此操作不可撤销。`)) return
   try {
     await api.deletePet(id.value)
     router.push('/')
