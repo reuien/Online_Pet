@@ -180,11 +180,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PxCard, PxButton, PxBadge, PxProgress, PxTooltip, PxIcon, PxPopconfirm } from 'sakana-element'
 import PetAvatar from '../components/PetAvatar.vue'
 import { api, type Pet, type PetLog, type Activity } from '../api/client'
+import { petSocket } from '../api/socket'
 
 const route = useRoute()
 const router = useRouter()
@@ -297,5 +298,18 @@ function formatDate(iso: string) {
 
 onMounted(() => {
   loadPet()
+
+  // Connect WebSocket and subscribe to this pet's real-time updates
+  petSocket.connect()
+  petSocket.subscribe(id.value)
+  petSocket.onPetUpdate((data: Pet) => {
+    if (data.id === id.value) {
+      pet.value = data
+    }
+  })
+})
+
+onUnmounted(() => {
+  petSocket.unsubscribe(id.value)
 })
 </script>

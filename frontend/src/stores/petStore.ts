@@ -1,12 +1,43 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { api, type Pet, type Activity } from '../api/client'
+import { api, type Pet } from '../api/client'
+import { petSocket } from '../api/socket'
 
 export const usePetStore = defineStore('pet', () => {
   const pets = ref<Pet[]>([])
   const leaderboard = ref<Pet[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const wsConnected = ref(false)
+
+  // Connect WebSocket and listen for updates
+  function connectSocket() {
+    if (petSocket.isConnected) {
+      wsConnected.value = true
+      return
+    }
+
+    petSocket.connect()
+    wsConnected.value = true
+
+    petSocket.onPetUpdate((data: Pet) => {
+      // Update pet in list
+      const idx = pets.value.findIndex((p) => p.id === data.id)
+      if (idx !== -1) {
+        pets.value[idx] = data
+      }
+      // Update in leaderboard too
+      const lbIdx = leaderboard.value.findIndex((p) => p.id === data.id)
+      if (lbIdx !== -1) {
+        leaderboard.value[lbIdx] = data
+      }
+    })
+  }
+
+  function disconnectSocket() {
+    petSocket.disconnect()
+    wsConnected.value = false
+  }
 
   async function fetchPets() {
     loading.value = true
@@ -63,6 +94,9 @@ export const usePetStore = defineStore('pet', () => {
     leaderboard,
     loading,
     error,
+    wsConnected,
+    connectSocket,
+    disconnectSocket,
     fetchPets,
     fetchLeaderboard,
     addPet,

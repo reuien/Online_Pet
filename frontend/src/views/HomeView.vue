@@ -21,7 +21,7 @@
     </div>
 
     <div v-else-if="pets.length === 0" class="flex flex-col items-center gap-6 p-8 min-h-[60vh] justify-center slide-up">
-      <div class="text-6xl float-anim">🏠</div>
+      <img src="../assets/pixel-house.svg" alt="pixel house" class="w-24 h-24 float-anim image-pixelated" />
       <PxCard>
         <div class="text-center py-8 px-4">
           <h3 class="text-lg font-bold mb-2">还没有宠物</h3>
@@ -88,9 +88,10 @@ import MiniStat from '../components/MiniStat.vue'
 
 const store = usePetStore()
 const { pets, loading } = storeToRefs(store)
-const { fetchPets } = store
+const { fetchPets, connectSocket } = store
 
 onMounted(() => {
+  connectSocket()
   fetchPets()
 })
 

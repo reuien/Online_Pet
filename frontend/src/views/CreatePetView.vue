@@ -16,7 +16,13 @@
       <PxCard>
         <template #header>
           <div class="text-center">
-            <div class="text-6xl mb-4 float-anim">{{ selected.emoji }}</div>
+            <img
+              v-if="selectedImage"
+              :src="selectedImage"
+              :alt="species"
+              class="w-24 h-24 mx-auto mb-4 float-anim image-pixelated"
+            />
+            <div v-else class="text-6xl mb-4 float-anim">{{ selected.emoji }}</div>
             <h3 class="text-lg font-bold">选择你的伙伴</h3>
           </div>
         </template>
@@ -60,6 +66,9 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { PxCard, PxButton, PxInput, PxIcon } from 'sakana-element'
 import { usePetStore } from '../stores/petStore'
+import wholeCat from '../assets/whole_cat.svg'
+import wholeDog from '../assets/whole_dog.svg'
+import wholeRabbit from '../assets/whole_rabbit.svg'
 
 const router = useRouter()
 const { addPet, loading } = usePetStore()
@@ -74,7 +83,14 @@ const speciesList = [
   { value: 'bird', label: '鸟', emoji: '🐦' },
 ]
 
+const speciesImageMap: Record<string, string> = {
+  cat: wholeCat,
+  dog: wholeDog,
+  rabbit: wholeRabbit,
+}
+
 const selected = computed(() => speciesList.find(s => s.value === species.value)!)
+const selectedImage = computed(() => speciesImageMap[species.value] || '')
 
 async function handleSubmit() {
   if (!name.value.trim()) return

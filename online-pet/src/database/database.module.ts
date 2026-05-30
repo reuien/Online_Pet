@@ -6,16 +6,30 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   imports: [
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST', 'localhost'),
-        port: configService.get('DB_PORT', 5432),
-        username: configService.get('DB_USERNAME', 'yuinen'),
-        password: configService.get('DB_PASSWORD', ''),
-        database: configService.get('DB_NAME', 'online_pet'),
-        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') !== 'production',
-      }),
+      useFactory: (configService: ConfigService) => {
+        const host = configService.get<string>('DB_HOST', 'localhost');
+        const port = configService.get<number>('DB_PORT', 5432);
+        const username = configService.get<string>('DB_USERNAME');
+        const password = configService.get<string>('DB_PASSWORD', '');
+        const database = configService.get<string>('DB_NAME', 'online_pet');
+
+        if (!username) {
+          throw new Error(
+            'Missing required database environment variable: DB_USERNAME',
+          );
+        }
+
+        return {
+          type: 'postgres' as const,
+          host,
+          port,
+          username,
+          password,
+          database,
+          entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+          synchronize: configService.get('NODE_ENV') !== 'production',
+        };
+      },
       inject: [ConfigService],
     }),
   ],
