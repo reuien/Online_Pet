@@ -10,8 +10,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pet } from './pets.entity';
 
+const wsAllowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim())
+  : ['http://localhost:5173'];
+
 @WebSocketGateway({
-  cors: { origin: true, credentials: true },
+  cors: { origin: wsAllowedOrigins, credentials: true },
   namespace: 'pet',
 })
 export class PetGateway implements OnGatewayConnection, OnGatewayDisconnect {
