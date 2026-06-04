@@ -18,8 +18,6 @@ export class PetsService {
   constructor(
     @InjectRepository(Pet)
     private petRepo: Repository<Pet>,
-    @InjectRepository(PetStats)
-    private statsRepo: Repository<PetStats>,
     @InjectRepository(PetLog)
     private logRepo: Repository<PetLog>,
     private dataSource: DataSource,
@@ -140,20 +138,25 @@ export class PetsService {
     try {
       // 直接查询，避免触发 findOne 的副作用（applyDecay + save）
       // 加悲观写锁防止并发 doActivity 导致重复衰减
+      // PostgreSQL 不支持 JOIN + FOR UPDATE，所以分两步查询
       const pet = await queryRunner.manager.findOne(Pet, {
         where: { id: petId, ownerId },
-        relations: { stats: true },
         lock: { mode: 'pessimistic_write' },
       });
       if (!pet) throw new NotFoundException('Pet not found');
-      if (!pet.stats) throw new NotFoundException('Pet stats not found');
+
+      const stats = await queryRunner.manager.findOne(PetStats, {
+        where: { petId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!stats) throw new NotFoundException('Pet stats not found');
+      pet.stats = stats;
 
       const activity = await queryRunner.manager.findOne(Activity, {
         where: { id: dto.activityId },
       });
       if (!activity) throw new NotFoundException('Activity not found');
 
-      const stats = pet.stats;
       applyDecay(stats);
 
       // 应用活动效果

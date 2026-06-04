@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Pet } from './pets.entity';
 import { PetGateway } from './pet.gateway';
 import { applyDecay, computeStatus } from './pet-utils';
@@ -21,7 +21,15 @@ export class PetSchedulerService {
     this.logger.log('Starting batch pet decay broadcast...');
     const start = Date.now();
 
+    // 只查询当前有活跃 WebSocket 订阅者的宠物
+    const activePetIds = this.getActivePetIds();
+    if (activePetIds.length === 0) {
+      this.logger.log('No active pet subscribers, skipping broadcast');
+      return;
+    }
+
     const pets = await this.petRepo.find({
+      where: { id: In(activePetIds) },
       relations: { stats: true },
     });
 
@@ -47,6 +55,25 @@ export class PetSchedulerService {
       broadcasted++;
     }
 
-    this.logger.log(`Broadcasted ${broadcasted} pets in ${Date.now() - start}ms`);
+    this.logger.log(
+      `Broadcasted ${broadcasted}/${activePetIds.length} pets in ${Date.now() - start}ms`,
+    );
+  }
+
+  private getActivePetIds(): string[] {
+    const server = this.petGateway.server;
+    if (!server?.sockets?.adapter?.rooms) return [];
+
+    const rooms = server.sockets.adapter.rooms;
+    const petIds: string[] = [];
+    for (const [roomName, sockets] of rooms) {
+      if (typeof roomName === 'string' && roomName.startsWith('pet:')) {
+        const size = typeof sockets === 'object' && 'size' in sockets ? sockets.size : 0;
+        if (size > 0) {
+          petIds.push(roomName.slice(4));
+        }
+      }
+    }
+    return petIds;
   }
 }

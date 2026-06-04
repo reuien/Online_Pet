@@ -9,6 +9,18 @@ import { Server, Socket } from 'socket.io';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pet } from './pets.entity';
+import { PetStats } from './pet-stats.entity';
+
+export interface PetUpdatePayload {
+  id: string;
+  name: string;
+  species: string;
+  status: string;
+  stats: PetStats;
+  level: number;
+  experience: number;
+  coins: number;
+}
 
 const wsAllowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim())
@@ -41,16 +53,24 @@ export class PetGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('subscribe')
   async handleSubscribe(client: Socket, petId: string) {
     const ownerId = client.data.ownerId as string | undefined;
-    if (ownerId && petId) {
-      const pet = await this.petRepo.findOne({
-        where: { id: petId, ownerId },
-        select: { id: true },
-      });
-      if (!pet) {
-        client.emit('error', { message: 'Access denied or pet not found' });
-        return;
-      }
+    if (!ownerId) {
+      client.emit('error', { message: 'Authentication required' });
+      return;
     }
+    if (!petId) {
+      client.emit('error', { message: 'Pet ID is required' });
+      return;
+    }
+
+    const pet = await this.petRepo.findOne({
+      where: { id: petId, ownerId },
+      select: { id: true },
+    });
+    if (!pet) {
+      client.emit('error', { message: 'Access denied or pet not found' });
+      return;
+    }
+
     const room = `pet:${petId}`;
     client.join(room);
   }
@@ -61,7 +81,7 @@ export class PetGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.leave(room);
   }
 
-  emitPetUpdate(petId: string, data: any) {
+  emitPetUpdate(petId: string, data: PetUpdatePayload) {
     const room = `pet:${petId}`;
     this.server.to(room).emit('petUpdate', data);
   }

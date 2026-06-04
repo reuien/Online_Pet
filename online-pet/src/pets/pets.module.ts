@@ -7,13 +7,15 @@ import { PetSchedulerService } from './pet-scheduler.service';
 import { PetGateway } from './pet.gateway';
 import { Pet } from './pets.entity';
 import { PetStats } from './pet-stats.entity';
-import { PetLog } from '../pet-logs/pet-log.entity';
-import { Activity } from '../activities/activity.entity';
+import { PetLogsModule } from '../pet-logs/pet-logs.module';
+import { ActivitiesModule } from '../activities/activities.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Pet, PetStats, PetLog, Activity]),
+    TypeOrmModule.forFeature([Pet, PetStats]),
     ScheduleModule.forRoot(),
+    PetLogsModule,
+    ActivitiesModule,
   ],
   controllers: [PetsController],
   providers: [PetsService, PetSchedulerService, PetGateway],
